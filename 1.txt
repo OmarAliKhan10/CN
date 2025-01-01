@@ -1,0 +1,81 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h> // Added for exit()
+
+char data[100], concatdata[117], src_crc[17], dest_crc[17], frame[120], divident[18];
+char divisor[18];
+char res[17] = "0000000000000000";
+
+void crc_cal(int node) {
+    int i, j;
+    for (j = 17; j < strlen(node == 0 ? concatdata : frame); j++) { // Fixed to handle correct string length
+        if (divident[0] == '1') {
+            for (i = 1; i <= 16; i++) {
+                divident[i - 1] = (divident[i] != divisor[i]) ? '1' : '0';
+            }
+        } else {
+            for (i = 1; i <= 16; i++) {
+                divident[i - 1] = divident[i];
+            }
+        }
+        divident[i - 1] = (node == 0 ? concatdata[j] : frame[j]);
+    }
+    divident[16] = '\0'; // Ensure null termination
+    printf("\nCRC is: %s\n", divident);
+    if (node == 0) {
+        strcpy(src_crc, divident);
+    } else {
+        strcpy(dest_crc, divident);
+    }
+}
+
+int main() {
+    int i;
+    printf("Enter the generator bits: ");
+    fgets(divisor, sizeof(divisor), stdin); // Replaced gets() with fgets()
+    divisor[strcspn(divisor, "\n")] = '\0'; // Remove trailing newline
+
+    if (strlen(divisor) != 17) { // Updated condition to check for exact 17 bits
+        printf("Please enter a generator of exactly 17 bits.\n");
+        exit(0);
+    }
+
+    printf("\nAt source node:\nEnter the message to be sent: ");
+    fgets(data, sizeof(data), stdin); // Replaced gets() with fgets()
+    data[strcspn(data, "\n")] = '\0'; // Remove trailing newline
+
+    strcpy(concatdata, data);
+    strcat(concatdata, "0000000000000000");
+
+    for (i = 0; i < 17; i++) { // Ensure correct initialization of divident
+        divident[i] = concatdata[i];
+    }
+    divident[17] = '\0';
+
+    crc_cal(0);
+
+    printf("\nData is:\t");
+    puts(data);
+    printf("\nThe frame transmitted is:\t\n%s%s", data, src_crc);
+    printf("\n\t\tSOURCE NODE TRANSMITTED THE FRAME---->");
+    printf("\n\n\n\n\t\t\tAT DESTINATION NODE\nEnter the received frame:\t");
+
+    fgets(frame, sizeof(frame), stdin); // Replaced gets() with fgets()
+    frame[strcspn(frame, "\n")] = '\0'; // Remove trailing newline
+
+    for (i = 0; i < 17; i++) {
+        divident[i] = frame[i];
+    }
+    divident[17] = '\0';
+
+    crc_cal(1);
+
+    if (strcmp(dest_crc, res) == 0) {
+        printf("\nReceived frame is error-free.\n");
+    } else {
+        printf("\nReceived frame contains one or more errors.\n");
+    }
+
+    return 0;
+}
+
